@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Plane Shooting Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+    }
+
+    .control-button {
+      width: 50px;
+      height: 50px;
+      margin: 0 10px;
+      background-color: #3498db;
+      color: #fff;
+      font-size: 1.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <div class="control-button" id="leftButton">&#9665;</div>
+  <div class="control-button" id="shootButton">&#128161;</div>
+  <div class="control-button" id="rightButton">&#9655;</div>
+</div>
+
+<script>
+  const canvas = document.createElement("canvas");
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const player = {
+    x: canvas.width / 2,
+    y: canvas.height - 50,
+    width: 50,
+    height: 50,
+    color: "#3498db",
+    speed: 5
+  };
+
+  const bullets = [];
+  const enemies = [];
+
+  function drawPlayer() {
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+  }
+
+  function drawBullets() {
+    bullets.forEach(bullet => {
+      ctx.fillStyle = "#e74c3c";
+      ctx.fillRect(bullet.x - 2, bullet.y - 10, 4, 10);
+    });
+  }
+
+  function drawEnemies() {
+    enemies.forEach(enemy => {
+      ctx.fillStyle = "#2ecc71";
+      ctx.fillRect(enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
+    });
+  }
+
+  function update() {
+    // Update player position
+    if (keys.left && player.x - player.width / 2 > 0) {
+      player.x -= player.speed;
+    }
+    if (keys.right && player.x + player.width / 2 < canvas.width) {
+      player.x += player.speed;
+    }
+
+    // Update bullets
+    bullets.forEach(bullet => {
+      bullet.y -= 10;
+    });
+
+    // Update enemies
+    enemies.forEach(enemy => {
+      enemy.y += 3;
+      if (Math.abs(player.x - enemy.x) < (player.width + enemy.width) / 2 &&
+          Math.abs(player.y - enemy.y) < (player.height + enemy.height) / 2) {
+        // Player hit by an enemy, you can handle game over logic here
+        alert("Game Over!");
+        resetGame();
+      }
+    });
+
+    // Check for bullet-enemy collisions
+    bullets.forEach((bullet, bulletIndex) => {
+      enemies.forEach((enemy, enemyIndex) => {
+        if (Math.abs(bullet.x - enemy.x) < (bullet.width + enemy.width) / 2 &&
+            Math.abs(bullet.y - enemy.y) < (bullet.height + enemy.height) / 2) {
+          // Bullet hit an enemy
+          bullets.splice(bulletIndex, 1);
+          enemies.splice(enemyIndex, 1);
+        }
+      });
+    });
+
+    // Spawn new enemies randomly
+    if (Math.random() < 0.02) {
+      enemies.push({
+        x: Math.random() * canvas.width,
+        y: -30,
+        width: 40,
+        height: 40
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawPlayer();
+    drawBullets();
+    drawEnemies();
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function resetGame() {
+    player.x = canvas.width / 2;
+    player.y = canvas.height - 50;
+    bullets.length = 0;
+    enemies.length = 0;
+  }
+
+  // Touch controls
+  const buttons = {
+    left: document.getElementById("leftButton"),
+    right: document.getElementById("rightButton"),
+    shoot: document.getElementById("shootButton")
+  };
+
+  buttons.left.addEventListener("touchstart", () => keys.left = true);
+  buttons.left.addEventListener("touchend", () => keys.left = false);
+
+  buttons.right.addEventListener("touchstart", () => keys.right = true);
+  buttons.right.addEventListener("touchend", () => keys.right = false);
+
+  buttons.shoot.addEventListener("touchstart", () => bullets.push({ x: player.x, y: player.y }));
+
+  // Keyboard controls for testing on desktop
+  const keys = {};
+  window.addEventListener("keydown", e => {
+    if (e.code === "ArrowLeft") keys.left = true;
+    if (e.code === "ArrowRight") keys.right = true;
+    if (e.code === "Space") bullets.push({ x: player.x, y: player.y });
+  });
+
+  window.addEventListener("keyup", e => {
+    if (e.code === "ArrowLeft") keys.left = false;
+    if (e.code === "ArrowRight") keys.right = false;
+  });
+
+  gameLoop();
+</script>
+
+</body>
+</html>
