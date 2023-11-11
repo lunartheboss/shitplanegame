@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plane Shooting Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  const canvas = document.createElement("canvas");
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const player = {
+    x: canvas.width / 2,
+    y: canvas.height - 50,
+    width: 50,
+    height: 50,
+    color: "#3498db",
+    speed: 5
+  };
+
+  const bullets = [];
+  const enemies = [];
+
+  function drawPlayer() {
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+  }
+
+  function drawBullets() {
+    bullets.forEach(bullet => {
+      ctx.fillStyle = "#e74c3c";
+      ctx.fillRect(bullet.x - 2, bullet.y - 10, 4, 10);
+    });
+  }
+
+  function drawEnemies() {
+    enemies.forEach(enemy => {
+      ctx.fillStyle = "#2ecc71";
+      ctx.fillRect(enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
+    });
+  }
+
+  function update() {
+    // Update player position
+    if (keys.ArrowLeft && player.x - player.width / 2 > 0) {
+      player.x -= player.speed;
+    }
+    if (keys.ArrowRight && player.x + player.width / 2 < canvas.width) {
+      player.x += player.speed;
+    }
+
+    // Update bullets
+    bullets.forEach(bullet => {
+      bullet.y -= 10;
+    });
+
+    // Update enemies
+    enemies.forEach(enemy => {
+      enemy.y += 3;
+      if (Math.abs(player.x - enemy.x) < (player.width + enemy.width) / 2 &&
+          Math.abs(player.y - enemy.y) < (player.height + enemy.height) / 2) {
+        // Player hit by an enemy, you can handle game over logic here
+        alert("Game Over!");
+        resetGame();
+      }
+    });
+
+    // Check for bullet-enemy collisions
+    bullets.forEach((bullet, bulletIndex) => {
+      enemies.forEach((enemy, enemyIndex) => {
+        if (Math.abs(bullet.x - enemy.x) < (bullet.width + enemy.width) / 2 &&
+            Math.abs(bullet.y - enemy.y) < (bullet.height + enemy.height) / 2) {
+          // Bullet hit an enemy
+          bullets.splice(bulletIndex, 1);
+          enemies.splice(enemyIndex, 1);
+        }
+      });
+    });
+
+    // Spawn new enemies randomly
+    if (Math.random() < 0.02) {
+      enemies.push({
+        x: Math.random() * canvas.width,
+        y: -30,
+        width: 40,
+        height: 40
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawPlayer();
+    drawBullets();
+    drawEnemies();
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function resetGame() {
+    player.x = canvas.width / 2;
+    player.y = canvas.height - 50;
+    bullets.length = 0;
+    enemies.length = 0;
+  }
+
+  // Keyboard controls
+  const keys = {};
+  window.addEventListener("keydown", e => keys[e.code] = true);
+  window.addEventListener("keyup", e => keys[e.code] = false);
+
+  // Player shooting
+  window.addEventListener("keydown", e => {
+    if (e.code === "Space") {
+      bullets.push({ x: player.x, y: player.y });
+    }
+  });
+
+  gameLoop();
+</script>
+
+</body>
+</html>
